@@ -47,7 +47,8 @@ public class Controller implements Initializable {
     }
 
     public void onClickAdd(ActionEvent actionEvent) {
-
+        progressBar.setProgress(0);
+        resultLabel.setText("");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(".TXT", "*.txt"));
         if (myFile != null)
             chooser.setInitialDirectory(myFile.getParentFile());
@@ -62,35 +63,41 @@ public class Controller implements Initializable {
             encodeButton.setDisable(false);
             decodeButton.setDisable(false);
         }
-        resultLabel.setText("");
     }
 
     private class EncodeThread extends Thread {
         @Override
         public void run() {
             if (myFile != null) {
-                progressBar.setProgress(0);
                 int counter = 0;
                 int read;
                 try {
                     stream = new RandomAccessFile(myFile, "rw");
                     int streamLength = (int) stream.length();
-                    int progressStep = (int) ((streamLength / 100) * 0.1);
+                    double progressStep = (streamLength * 0.01);
+
+                    double j = 0.005/progressStep;
                     String[] binary = new String[streamLength];
                     while ((read = stream.read()) != -1) {
-                        progressBar.setProgress(progressStep += progressStep);
+                        progressBar.setProgress(j+=(0.005/progressStep));
                         binary[counter++] = Integer.toBinaryString(read);
+
                     }
-                    progressBar.setProgress(0.50);
+                    streamLength = binary.length;
+                    progressStep =  (int)(streamLength*0.01);
+
+
                     stream.setLength(0);
                     for (String s : binary) {
+                        progressBar.setProgress(j+=(0.005/progressStep));
                         stream.seek(stream.length());
                         stream.writeBytes(s + " ");
                     }
-                    stream.close();
-                    progressBar.setProgress(1);
+
+
                     if (myFile.exists())
                         desktop.open(myFile);
+                    stream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -104,27 +111,39 @@ public class Controller implements Initializable {
         public void run() {
             Pattern p = Pattern.compile(" ");
             if (myFile != null) {
-                progressBar.setProgress(0);
-
                 ArrayList<String> list = new ArrayList<>();
+
                 try {
                     stream = new RandomAccessFile(myFile, "rw");
+
+                    int streamLength = (int) stream.length();
+                    double progressStep = streamLength * 0.01;
+                    double j = 0.005/progressStep;
+
                     String line;
+
                     while ((line = stream.readLine()) != null) {
+
                         String[] strings = p.split(line);
                         Collections.addAll(list, strings);
+                        progressBar.setProgress(j+=(0.005/progressStep));
                     }
-                    progressBar.setProgress(0.50);
+
+                    streamLength = list.size();
+                    progressStep =(int) (streamLength * 0.01);
+
                     stream.setLength(0);
                     int cursorPos = 0;
                     for (String str : list) {
                         stream.seek(cursorPos++);
                         stream.write(Integer.parseInt(str, 2));
+                        progressBar.setProgress(j+=(0.005/progressStep));
                     }
-                    stream.close();
-                    progressBar.setProgress(1);
+
                     if (myFile.exists())
                         desktop.open(myFile);
+                    stream.close();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -135,19 +154,21 @@ public class Controller implements Initializable {
 
     public void onEncode(ActionEvent actionEvent) throws IOException, InterruptedException {
         EncodeThread encodeThread = new EncodeThread();
+        progressBar.setProgress(0);
         resultLabel.setText("");
         encodeThread.start();
-        encodeThread.join();
-        resultLabel.setText("Успешно");
+
+
     }
 
     public void onDecode(ActionEvent actionEvent) throws IOException, InterruptedException {
 
-       DecodeThread decodeThread = new DecodeThread();
+        DecodeThread decodeThread = new DecodeThread();
+        progressBar.setProgress(0);
         resultLabel.setText("");
         decodeThread.start();
-        decodeThread.join();
-        resultLabel.setText("Успешно");
+
+
     }
 
     //инициализация обработчиков drag&drop для файла
