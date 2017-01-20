@@ -120,12 +120,18 @@ public class Controller implements Initializable {
                     double progressStep = streamLength * 0.01;
                     double j = 0.005/progressStep;
 
-                    String line;
 
-                    while ((line = stream.readLine()) != null) {
+                    StringBuilder string = new StringBuilder();
+                    for (int i = 0; i < streamLength; i++){
 
-                        String[] strings = p.split(line);
-                        Collections.addAll(list, strings);
+                        int read = stream.read();
+                        if(Character.isSpaceChar(read)){
+                            list.add(string.toString());
+                            string = new StringBuilder();
+                        }
+                        else {
+                            string.append((char)read);
+                        }
                         progressBar.setProgress(j+=(0.005/progressStep));
                     }
 
