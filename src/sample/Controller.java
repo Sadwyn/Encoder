@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
-public class Controller implements Initializable{
+public class Controller implements Initializable {
 
     @FXML
     public ProgressBar progressBar;
@@ -41,6 +41,7 @@ public class Controller implements Initializable{
     private RandomAccessFile stream; // поток чтения запси
     private FileChooser chooser = new FileChooser();
     private File myFile; // загружаемый файл
+
     private void setFile(RandomAccessFile stream) {
         this.stream = stream;
     }
@@ -51,7 +52,7 @@ public class Controller implements Initializable{
         if (myFile != null)
             chooser.setInitialDirectory(myFile.getParentFile());
         myFile = chooser.showOpenDialog(((Node) actionEvent.getSource()).getScene().getWindow());
-        if(myFile!=null) {
+        if (myFile != null) {
             try {
                 setFile(new RandomAccessFile(myFile, "rw"));
                 fileNameLabel.setText(myFile.getName());
@@ -64,61 +65,89 @@ public class Controller implements Initializable{
         resultLabel.setText("");
     }
 
+    private class EncodeThread extends Thread {
+        @Override
+        public void run() {
+            if (myFile != null) {
+                progressBar.setProgress(0);
+                int counter = 0;
+                int read;
+                try {
+                    stream = new RandomAccessFile(myFile, "rw");
+                    int streamLength = (int) stream.length();
+                    int progressStep = (int) ((streamLength / 100) * 0.1);
+                    String[] binary = new String[streamLength];
+                    while ((read = stream.read()) != -1) {
+                        progressBar.setProgress(progressStep += progressStep);
+                        binary[counter++] = Integer.toBinaryString(read);
+                    }
+                    progressBar.setProgress(0.50);
+                    stream.setLength(0);
+                    for (String s : binary) {
+                        stream.seek(stream.length());
+                        stream.writeBytes(s + " ");
+                    }
+                    stream.close();
+                    progressBar.setProgress(1);
+                    if (myFile.exists())
+                        desktop.open(myFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-    public void onEncode(ActionEvent actionEvent) throws IOException {
-        if (myFile != null) {
-            resultLabel.setText("");
-            progressBar.setProgress(0);
-            int counter = 0;
-            int read;
-            stream = new RandomAccessFile(myFile, "rw");
-            int streamLength = (int) stream.length();
-            int progressStep = (int) ((streamLength / 100) * 0.1);
-            String[] binary = new String[streamLength];
-            while ((read = stream.read()) != -1) {
-                progressBar.setProgress(progressStep+=progressStep);
-                binary[counter++] = Integer.toBinaryString(read);
             }
-            progressBar.setProgress(0.50);
-            stream.setLength(0);
-            for (String s : binary) {
-                stream.seek(stream.length());
-                stream.writeBytes(s + " ");
-            }
-            stream.close();
-            progressBar.setProgress(1);
-            if (myFile.exists())
-                desktop.open(myFile);
-            resultLabel.setText("Успешно");
         }
     }
 
-    public void onDecode(ActionEvent actionEvent) throws IOException {
+    private class DecodeThread extends Thread {
+        @Override
+        public void run() {
+            Pattern p = Pattern.compile(" ");
+            if (myFile != null) {
+                progressBar.setProgress(0);
 
-        Pattern p = Pattern.compile(" ");
-        if (myFile != null) {
-            progressBar.setProgress(0);
-            resultLabel.setText("");
-            ArrayList<String> list = new ArrayList<>();
-            stream = new RandomAccessFile(myFile, "rw");
-            String line;
-            while ((line = stream.readLine()) != null) {
-                String[] strings = p.split(line);
-                Collections.addAll(list, strings);
+                ArrayList<String> list = new ArrayList<>();
+                try {
+                    stream = new RandomAccessFile(myFile, "rw");
+                    String line;
+                    while ((line = stream.readLine()) != null) {
+                        String[] strings = p.split(line);
+                        Collections.addAll(list, strings);
+                    }
+                    progressBar.setProgress(0.50);
+                    stream.setLength(0);
+                    int cursorPos = 0;
+                    for (String str : list) {
+                        stream.seek(cursorPos++);
+                        stream.write(Integer.parseInt(str, 2));
+                    }
+                    stream.close();
+                    progressBar.setProgress(1);
+                    if (myFile.exists())
+                        desktop.open(myFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
-            progressBar.setProgress(0.50);
-            stream.setLength(0);
-            int cursorPos = 0;
-            for (String str : list) {
-                stream.seek(cursorPos++);
-                stream.write(Integer.parseInt(str, 2));
-            }
-            stream.close();
-            progressBar.setProgress(1);
-            if (myFile.exists())
-                desktop.open(myFile);
-            resultLabel.setText("Успешно");
         }
+    }
+
+    public void onEncode(ActionEvent actionEvent) throws IOException, InterruptedException {
+        EncodeThread encodeThread = new EncodeThread();
+        resultLabel.setText("");
+        encodeThread.start();
+        encodeThread.join();
+        resultLabel.setText("Успешно");
+    }
+
+    public void onDecode(ActionEvent actionEvent) throws IOException, InterruptedException {
+
+       DecodeThread decodeThread = new DecodeThread();
+        resultLabel.setText("");
+        decodeThread.start();
+        decodeThread.join();
+        resultLabel.setText("Успешно");
     }
 
     //инициализация обработчиков drag&drop для файла
