@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="284.0" prefWidth="475.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+<AnchorPane fx:id="AnchorPane" prefHeight="284.0" prefWidth="475.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <children>
       <Button fx:id="encodeButton" layoutX="52.0" layoutY="148.0" mnemonicParsing="false" onAction="#onEncode" prefHeight="25.0" prefWidth="109.0" text="Закодировать" />
-      <Button fx:id="decodeButton" layoutX="319.0" layoutY="148.0" mnemonicParsing="false" onAction="#onDecode" prefHeight="25.0" prefWidth="109.0" text="Раскодировать" />
-      <Label fx:id="fileNameLabel" alignment="CENTER" layoutX="46.0" layoutY="86.0" prefHeight="17.0" prefWidth="390.0" textAlignment="CENTER" />
-      <Button layoutX="179.0" layoutY="31.0" mnemonicParsing="false" onAction="#onClickAdd" prefHeight="25.0" prefWidth="118.0" text="Добавить файл..." />
-      <ProgressBar fx:id="progressBar" layoutX="41.0" layoutY="212.0" prefHeight="18.0" prefWidth="390.0" progress="0.0" />
-      <Label fx:id="resultLabel" alignment="CENTER" layoutX="193.0" layoutY="244.0" prefHeight="17.0" prefWidth="86.0" textFill="#15e83c" />
+      <Button fx:id="decodeButton" layoutX="319.0" layoutY="148.0" mnemonicParsing="false" onAction="#onDecode" prefHeight="25.0" prefWidth="109.0" text="Декодировать" />
+      <Label fx:id="fileNameLabel" alignment="CENTER" layoutX="46.0" layoutY="86.0" prefHeight="17.0" prefWidth="390.0" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font name="Times New Roman Bold" size="24.0" />
+         </font></Label>
+      <Button fx:id="chooseFileButton" layoutX="179.0" layoutY="31.0" mnemonicParsing="false" onAction="#onClickAdd" prefHeight="25.0" prefWidth="118.0" text="Добавить файл..." />
+      <ProgressBar fx:id="progressBar" layoutX="52.0" layoutY="211.0" prefHeight="18.0" prefWidth="376.0" progress="0.0" />
    </children>
 </AnchorPane>

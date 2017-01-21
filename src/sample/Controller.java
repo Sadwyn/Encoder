@@ -5,12 +5,17 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Background;
+import javafx.scene.paint.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 
 import java.awt.*;
@@ -20,7 +25,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
@@ -35,7 +39,9 @@ public class Controller implements Initializable {
     @FXML
     public Label fileNameLabel;
     @FXML
-    public Label resultLabel;
+    public Button chooseFileButton;
+    @FXML
+    public javafx.scene.layout.AnchorPane AnchorPane;
 
     private Desktop desktop = Desktop.getDesktop();
     private RandomAccessFile stream; // поток чтения запси
@@ -48,7 +54,6 @@ public class Controller implements Initializable {
 
     public void onClickAdd(ActionEvent actionEvent) {
         progressBar.setProgress(0);
-        resultLabel.setText("");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(".TXT", "*.txt"));
         if (myFile != null)
             chooser.setInitialDirectory(myFile.getParentFile());
@@ -69,6 +74,14 @@ public class Controller implements Initializable {
         @Override
         public void run() {
             if (myFile != null) {
+
+                encodeButton.setDisable(true);
+                decodeButton.setDisable(true);
+                chooseFileButton.setDisable(true);
+                encodeButton.setOpacity(0.8);
+                decodeButton.setOpacity(0.8);
+                chooseFileButton.setOpacity(0.8);
+
                 int counter = 0;
                 int read;
                 try {
@@ -76,31 +89,36 @@ public class Controller implements Initializable {
                     int streamLength = (int) stream.length();
                     double progressStep = (streamLength * 0.01);
 
-                    double j = 0.005/progressStep;
+                    double j = 0.005 / progressStep;
                     String[] binary = new String[streamLength];
                     while ((read = stream.read()) != -1) {
-                        progressBar.setProgress(j+=(0.005/progressStep));
+                        progressBar.setProgress(j += (0.005 / progressStep));
                         binary[counter++] = Integer.toBinaryString(read);
-
                     }
                     streamLength = binary.length;
-                    progressStep =  (int)(streamLength*0.01);
+                    progressStep = (int) (streamLength * 0.01);
 
 
                     stream.setLength(0);
                     for (String s : binary) {
-                        progressBar.setProgress(j+=(0.005/progressStep));
+                        progressBar.setProgress(j += (0.005 / progressStep));
                         stream.seek(stream.length());
                         stream.writeBytes(s + " ");
                     }
 
-
+                    stream.close();
                     if (myFile.exists())
                         desktop.open(myFile);
-                    stream.close();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                encodeButton.setDisable(false);
+                decodeButton.setDisable(false);
+                chooseFileButton.setDisable(false);
+                encodeButton.setOpacity(1);
+                decodeButton.setOpacity(1);
+                chooseFileButton.setOpacity(1);
 
             }
         }
@@ -109,8 +127,16 @@ public class Controller implements Initializable {
     private class DecodeThread extends Thread {
         @Override
         public void run() {
-            Pattern p = Pattern.compile(" ");
+
             if (myFile != null) {
+
+                encodeButton.setDisable(true);
+                decodeButton.setDisable(true);
+                encodeButton.setOpacity(0.8);
+                decodeButton.setOpacity(0.8);
+                chooseFileButton.setOpacity(0.8);
+                chooseFileButton.setDisable(true);
+
                 ArrayList<String> list = new ArrayList<>();
 
                 try {
@@ -118,50 +144,54 @@ public class Controller implements Initializable {
 
                     int streamLength = (int) stream.length();
                     double progressStep = streamLength * 0.01;
-                    double j = 0.005/progressStep;
+                    double j = 0.005 / progressStep;
 
 
                     StringBuilder string = new StringBuilder();
-                    for (int i = 0; i < streamLength; i++){
+                    for (int i = 0; i < streamLength; i++) {
 
                         int read = stream.read();
-                        if(Character.isSpaceChar(read)){
+                        if (Character.isSpaceChar(read)) {
                             list.add(string.toString());
                             string = new StringBuilder();
+                        } else {
+                            string.append((char) read);
                         }
-                        else {
-                            string.append((char)read);
-                        }
-                        progressBar.setProgress(j+=(0.005/progressStep));
+                        progressBar.setProgress(j += (0.005 / progressStep));
                     }
 
                     streamLength = list.size();
-                    progressStep =(int) (streamLength * 0.01);
+                    progressStep = (int) (streamLength * 0.01);
 
                     stream.setLength(0);
                     int cursorPos = 0;
                     for (String str : list) {
                         stream.seek(cursorPos++);
                         stream.write(Integer.parseInt(str, 2));
-                        progressBar.setProgress(j+=(0.005/progressStep));
+                        progressBar.setProgress(j += (0.005 / progressStep));
                     }
-
+                    stream.close();
                     if (myFile.exists())
                         desktop.open(myFile);
-                    stream.close();
+
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
+                encodeButton.setDisable(false);
+                decodeButton.setDisable(false);
+                chooseFileButton.setDisable(false);
+                encodeButton.setOpacity(1);
+                decodeButton.setOpacity(1);
+                chooseFileButton.setOpacity(1);
             }
         }
     }
 
     public void onEncode(ActionEvent actionEvent) throws IOException, InterruptedException {
+
         EncodeThread encodeThread = new EncodeThread();
         progressBar.setProgress(0);
-        resultLabel.setText("");
         encodeThread.start();
 
 
@@ -171,7 +201,7 @@ public class Controller implements Initializable {
 
         DecodeThread decodeThread = new DecodeThread();
         progressBar.setProgress(0);
-        resultLabel.setText("");
+
         decodeThread.start();
 
 
@@ -208,10 +238,12 @@ public class Controller implements Initializable {
                     }
                     encodeButton.setDisable(false);
                     decodeButton.setDisable(false);
+                    encodeButton.setOpacity(1);
+                    decodeButton.setOpacity(1);
                 }
                 event.setDropCompleted(success);
                 event.consume();
-                resultLabel.setText("");
+
                 progressBar.setProgress(0);
             }
         });
@@ -219,7 +251,11 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        encodeButton.setOpacity(0.8);
+        decodeButton.setOpacity(0.8);
         encodeButton.setDisable(true);
         decodeButton.setDisable(true);
     }
+
 }
+
