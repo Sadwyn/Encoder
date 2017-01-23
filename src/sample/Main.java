@@ -16,7 +16,7 @@ public class Main extends Application {
         Parent parent = loader.load();
         Scene scene = new Scene(parent);
 
-        BackgroundImage image = new BackgroundImage(new Image("background.png"), BackgroundRepeat.REPEAT,BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+        BackgroundImage image = new BackgroundImage(new Image(this.getClass().getResource("/background.jpg").toExternalForm()), BackgroundRepeat.REPEAT,BackgroundRepeat.NO_REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
         Controller controller = loader.getController();
         controller.AnchorPane.setBackground(new Background(image));
         primaryStage.setTitle("Encoder 1.0");

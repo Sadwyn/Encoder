@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -11,11 +12,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.paint.*;
-import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
 
 import java.awt.*;
@@ -26,7 +22,6 @@ import java.io.RandomAccessFile;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
-import java.util.regex.Pattern;
 
 public class Controller implements Initializable {
 
@@ -42,31 +37,69 @@ public class Controller implements Initializable {
     public Button chooseFileButton;
     @FXML
     public javafx.scene.layout.AnchorPane AnchorPane;
+    @FXML
+    public Label checkFileStateLabel;
 
     private Desktop desktop = Desktop.getDesktop();
     private RandomAccessFile stream; // поток чтения запси
     private FileChooser chooser = new FileChooser();
     private File myFile; // загружаемый файл
+    private boolean isFileEncoded;
+    private boolean isFileDecoded;
 
     private void setFile(RandomAccessFile stream) {
         this.stream = stream;
     }
 
     public void onClickAdd(ActionEvent actionEvent) {
+        isFileDecoded = false;
+        isFileEncoded = false;
         progressBar.setProgress(0);
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(".TXT", "*.txt"));
         if (myFile != null)
             chooser.setInitialDirectory(myFile.getParentFile());
-        myFile = chooser.showOpenDialog(((Node) actionEvent.getSource()).getScene().getWindow());
-        if (myFile != null) {
-            try {
-                setFile(new RandomAccessFile(myFile, "rw"));
-                fileNameLabel.setText(myFile.getName());
-            } catch (FileNotFoundException e) {
-                fileNameLabel.setText("Ошибка загрузки файла");
+            myFile = chooser.showOpenDialog(((Node) actionEvent.getSource()).getScene().getWindow());
+            if (myFile != null) {
+                try {
+                    setFile(new RandomAccessFile(myFile, "rw"));
+                    fileNameLabel.setText(myFile.getName());
+                } catch (FileNotFoundException e) {
+                    fileNameLabel.setText("Ошибка загрузки файла");
+                }
+                encodeButton.setDisable(false);
+                decodeButton.setDisable(false);
+                 new FileStateCheckThread().start();
             }
-            encodeButton.setDisable(false);
-            decodeButton.setDisable(false);
+
+
+
+    }
+
+    private class FileStateCheckThread extends Thread{
+        int read;
+
+        @Override
+        public void run() {
+            Platform.runLater(()->checkFileStateLabel.setText("Файл проверяется..."));
+            chooseFileButton.setDisable(true);
+            decodeButton.setDisable(true);
+            encodeButton.setDisable(true);
+            try {
+                while ((read = stream.read())!=-1){
+                    if(!((read == 32)||(read == 48)||(read==49))){
+                        isFileDecoded = true;
+                        break;
+                    }
+                }
+                if(!isFileDecoded) {
+                    isFileEncoded = true;
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Platform.runLater(Controller.this::setButtonsState);
+            chooseFileButton.setDisable(false);
         }
     }
 
@@ -74,13 +107,10 @@ public class Controller implements Initializable {
         @Override
         public void run() {
             if (myFile != null) {
-
                 encodeButton.setDisable(true);
                 decodeButton.setDisable(true);
                 chooseFileButton.setDisable(true);
-                encodeButton.setOpacity(0.8);
-                decodeButton.setOpacity(0.8);
-                chooseFileButton.setOpacity(0.8);
+
 
                 int counter = 0;
                 int read;
@@ -105,20 +135,18 @@ public class Controller implements Initializable {
                         stream.seek(stream.length());
                         stream.writeBytes(s + " ");
                     }
-
                     stream.close();
+                    isFileEncoded = true;
+                    isFileDecoded = false;
                     if (myFile.exists())
                         desktop.open(myFile);
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                encodeButton.setDisable(false);
-                decodeButton.setDisable(false);
+
+                Platform.runLater(Controller.this::setButtonsState);
                 chooseFileButton.setDisable(false);
-                encodeButton.setOpacity(1);
-                decodeButton.setOpacity(1);
-                chooseFileButton.setOpacity(1);
 
             }
         }
@@ -127,14 +155,9 @@ public class Controller implements Initializable {
     private class DecodeThread extends Thread {
         @Override
         public void run() {
-
             if (myFile != null) {
-
                 encodeButton.setDisable(true);
                 decodeButton.setDisable(true);
-                encodeButton.setOpacity(0.8);
-                decodeButton.setOpacity(0.8);
-                chooseFileButton.setOpacity(0.8);
                 chooseFileButton.setDisable(true);
 
                 ArrayList<String> list = new ArrayList<>();
@@ -171,6 +194,9 @@ public class Controller implements Initializable {
                         progressBar.setProgress(j += (0.005 / progressStep));
                     }
                     stream.close();
+                    chooseFileButton.setDisable(false);
+                    isFileDecoded = true;
+                    isFileEncoded = false;
                     if (myFile.exists())
                         desktop.open(myFile);
 
@@ -178,39 +204,29 @@ public class Controller implements Initializable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                encodeButton.setDisable(false);
-                decodeButton.setDisable(false);
+
+               Platform.runLater(Controller.this::setButtonsState);
                 chooseFileButton.setDisable(false);
-                encodeButton.setOpacity(1);
-                decodeButton.setOpacity(1);
-                chooseFileButton.setOpacity(1);
+
             }
         }
     }
 
     public void onEncode(ActionEvent actionEvent) throws IOException, InterruptedException {
-
         EncodeThread encodeThread = new EncodeThread();
         progressBar.setProgress(0);
         encodeThread.start();
-
-
     }
 
     public void onDecode(ActionEvent actionEvent) throws IOException, InterruptedException {
-
         DecodeThread decodeThread = new DecodeThread();
         progressBar.setProgress(0);
-
         decodeThread.start();
-
-
     }
 
     //инициализация обработчиков drag&drop для файла
     public void initHandlers() {
 
-        fileNameLabel.setOnDragDone(fileNameLabel.getScene().getOnDragDone());
         fileNameLabel.getScene().setOnDragOver(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
@@ -223,7 +239,8 @@ public class Controller implements Initializable {
         fileNameLabel.getScene().setOnDragDropped(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
-
+                isFileDecoded = false;
+                isFileEncoded = false;
                 Dragboard db = event.getDragboard();
                 boolean success = false;
                 if (db.hasFiles()) {
@@ -236,13 +253,12 @@ public class Controller implements Initializable {
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
-                    encodeButton.setDisable(false);
-                    decodeButton.setDisable(false);
-                    encodeButton.setOpacity(1);
-                    decodeButton.setOpacity(1);
+
+
                 }
                 event.setDropCompleted(success);
                 event.consume();
+                new FileStateCheckThread().start();
 
                 progressBar.setProgress(0);
             }
@@ -251,11 +267,21 @@ public class Controller implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        encodeButton.setOpacity(0.8);
-        decodeButton.setOpacity(0.8);
         encodeButton.setDisable(true);
         decodeButton.setDisable(true);
     }
 
+    public void setButtonsState(){
+        if(isFileDecoded){
+            encodeButton.setDisable(false);
+            decodeButton.setDisable(true);
+            checkFileStateLabel.setText("Файл не закодирован");
+        }
+        if(isFileEncoded){
+            encodeButton.setDisable(true);
+            decodeButton.setDisable(false);
+            checkFileStateLabel.setText("Файл закодирован");
+        }
+    }
 }
 

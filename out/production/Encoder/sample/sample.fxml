@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.text.*?>
-<?import java.lang.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.AnchorPane?>
-
+<?import javafx.scene.text.Font?>
 <AnchorPane fx:id="AnchorPane" prefHeight="284.0" prefWidth="475.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
    <children>
       <Button fx:id="encodeButton" layoutX="52.0" layoutY="148.0" mnemonicParsing="false" onAction="#onEncode" prefHeight="25.0" prefWidth="109.0" text="Закодировать" />
       <Button fx:id="decodeButton" layoutX="319.0" layoutY="148.0" mnemonicParsing="false" onAction="#onDecode" prefHeight="25.0" prefWidth="109.0" text="Декодировать" />
-      <Label fx:id="fileNameLabel" alignment="CENTER" layoutX="46.0" layoutY="86.0" prefHeight="17.0" prefWidth="390.0" textAlignment="CENTER" textFill="WHITE">
+      <Label fx:id="fileNameLabel" alignment="CENTER" layoutX="45.0" layoutY="65.0" prefHeight="17.0" prefWidth="390.0" textAlignment="CENTER" textFill="WHITE">
          <font>
-            <Font name="Times New Roman Bold" size="24.0" />
+            <Font name="Cambria Bold" size="22.0" />
          </font></Label>
-      <Button fx:id="chooseFileButton" layoutX="179.0" layoutY="31.0" mnemonicParsing="false" onAction="#onClickAdd" prefHeight="25.0" prefWidth="118.0" text="Добавить файл..." />
+      <Button fx:id="chooseFileButton" layoutX="181.0" layoutY="22.0" mnemonicParsing="false" onAction="#onClickAdd" prefHeight="25.0" prefWidth="118.0" text="Добавить файл..." />
       <ProgressBar fx:id="progressBar" layoutX="52.0" layoutY="211.0" prefHeight="18.0" prefWidth="376.0" progress="0.0" />
+      <Label fx:id="checkFileStateLabel" alignment="CENTER" layoutX="138.0" layoutY="105.0" prefHeight="22.0" prefWidth="199.0" textFill="WHITE">
+         <font>
+            <Font name="Cambria Bold" size="18.0" />
+         </font></Label>
    </children>
 </AnchorPane>
